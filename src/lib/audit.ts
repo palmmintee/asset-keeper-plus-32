@@ -4,7 +4,7 @@ export async function logAudit(params: {
   action: string;
   entityType?: string;
   entityId?: string;
-  details?: Record<string, unknown>;
+  details?: any;
 }) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
