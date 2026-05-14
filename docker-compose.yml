@@ -1,0 +1,154 @@
+# IT Stock Management - Self-Hosted (Ubuntu / LAN)
+# รันด้วย: docker compose up -d
+#
+# ประกอบด้วย:
+#   - db        : PostgreSQL 15 (Supabase fork)
+#   - kong      : API Gateway (port 8000 = Supabase REST/Auth/Storage endpoint)
+#   - auth      : GoTrue (JWT auth)
+#   - rest      : PostgREST (auto REST API จาก schema)
+#   - storage   : Supabase Storage API
+#   - studio    : Web UI จัดการ DB (port 3001)
+#   - meta      : pg-meta (สำหรับ Studio)
+#   - app       : Frontend React (port 8080)
+#
+# ก่อนรัน: คัดลอก .env.example → .env แล้วแก้ค่าที่จำเป็น (โดยเฉพาะ JWT_SECRET, รหัสผ่าน)
+
+name: it-stock
+
+services:
+  db:
+    image: supabase/postgres:15.1.1.78
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: 3600
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d/migrations:ro
+      - ./deploy/init-db.sh:/docker-entrypoint-initdb.d/99-app-migrations.sh:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth:
+    image: supabase/gotrue:v2.158.1
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@db:5432/postgres?search_path=auth
+      GOTRUE_SITE_URL: ${PUBLIC_URL}
+      GOTRUE_URI_ALLOW_LIST: "*"
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"   # auto-confirm: ใช้งานใน LAN ไม่ต้อง verify email
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_SECURE_EMAIL_CHANGE_ENABLED: "false"
+
+  rest:
+    image: postgrest/postgrest:v12.2.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,storage
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+
+  storage:
+    image: supabase/storage-api:v1.11.13
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD}@db:5432/postgres
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: stub
+      GLOBAL_S3_BUCKET: stub
+    volumes:
+      - storage-data:/var/lib/storage
+
+  meta:
+    image: supabase/postgres-meta:v0.84.2
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+  kong:
+    image: kong:2.8.1
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl
+    volumes:
+      - ./deploy/kong.yml:/var/lib/kong/kong.yml:ro
+
+  studio:
+    image: supabase/studio:20240729-ce42139
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DEFAULT_ORGANIZATION_NAME: "IT Stock"
+      DEFAULT_PROJECT_NAME: "IT Stock"
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_PUBLIC_URL: ${PUBLIC_URL}
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${PUBLIC_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${ANON_KEY}
+        VITE_SUPABASE_PROJECT_ID: local
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - kong
+
+volumes:
+  db-data:
+  storage-data:
