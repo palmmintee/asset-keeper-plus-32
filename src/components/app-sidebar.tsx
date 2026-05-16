@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Boxes, Database, Users, ScrollText, LogOut, Moon, Sun, Settings,
+  LayoutDashboard, Boxes, Database, Users, ScrollText, LogOut, Moon, Sun, Settings, Package,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
