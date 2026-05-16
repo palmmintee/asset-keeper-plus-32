@@ -33,19 +33,6 @@ function LoginPage() {
     navigate({ to: "/dashboard" });
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    const redirectUrl = `${window.location.origin}/dashboard`;
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: redirectUrl, data: { full_name: fullName } },
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("สมัครสมาชิกสำเร็จ — กรุณายืนยันอีเมล");
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-soft via-background to-background p-4">
