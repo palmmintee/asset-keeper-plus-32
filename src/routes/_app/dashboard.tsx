@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Boxes, Activity, AlertTriangle, ShieldAlert, PackageCheck, ShieldCheck } from "lucide-react";
+import { Boxes, Activity, AlertTriangle, ShieldAlert, PackageCheck, ShieldCheck, Package, PackageX } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
@@ -33,15 +33,17 @@ function Dashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [assetsRes, statusesRes, categoriesRes, recentRes] = await Promise.all([
+      const [assetsRes, statusesRes, categoriesRes, recentRes, consumablesRes] = await Promise.all([
         supabase.from("assets").select("id, status_id, category_id, warranty_expiry_date, name, updated_at, asset_code"),
         supabase.from("asset_statuses").select("id, name, color"),
         supabase.from("categories").select("id, name"),
         supabase.from("assets").select("id, name, asset_code, updated_at").order("updated_at", { ascending: false }).limit(6),
+        supabase.from("consumables").select("id, equipment_type, equipment_name, quantity"),
       ]);
       const assets = assetsRes.data ?? [];
       const statuses = statusesRes.data ?? [];
       const categories = categoriesRes.data ?? [];
+      const consumables = consumablesRes.data ?? [];
 
       const statusMap = new Map(statuses.map(s => [s.id, s]));
       const catMap = new Map(categories.map(c => [c.id, c.name]));
@@ -70,11 +72,16 @@ function Dashboard() {
       const borrowed = assets.filter(a => statusMap.get(a.status_id ?? "")?.name === "ถูกยืม").length;
       const disposed = assets.filter(a => statusMap.get(a.status_id ?? "")?.name === "จำหน่ายแล้ว").length;
 
+      const consumableTotal = consumables.reduce((s, c) => s + (c.quantity ?? 0), 0);
+      const consumableLow = consumables.filter(c => (c.quantity ?? 0) < 5);
+
       return {
         total: assets.length,
         inUse, borrowed, disposed, broken, expiringSoon,
         byStatus, byCategory,
         recent: recentRes.data ?? [],
+        consumableTotal,
+        consumableLow,
       };
     },
   });
@@ -157,6 +164,39 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">ยังไม่มีข้อมูล</p>
         )}
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <StatCard
+          icon={Package}
+          label="อุปกรณ์สิ้นเปลือง (รวม)"
+          value={data?.consumableTotal ?? 0}
+          accent="bg-primary-soft text-primary"
+          sub={`${(data?.consumableLow.length ?? 0)} รายการใกล้หมด`}
+        />
+        <Card className="p-5 lg:col-span-2">
+          <div className="flex items-center gap-2 mb-4">
+            <PackageX className="h-4 w-4 text-warning" />
+            <h3 className="font-semibold">สิ้นเปลืองใกล้หมด (น้อยกว่า 5)</h3>
+          </div>
+          {data?.consumableLow.length ? (
+            <div className="divide-y divide-border max-h-64 overflow-y-auto">
+              {data.consumableLow.map(c => (
+                <div key={c.id} className="py-2 flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm">{c.equipment_name}</div>
+                    <div className="text-xs text-muted-foreground">{c.equipment_type}</div>
+                  </div>
+                  <div className={`text-sm font-bold tabular-nums ${c.quantity === 0 ? "text-destructive" : "text-warning"}`}>
+                    {c.quantity}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">ไม่มีรายการใกล้หมด</p>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }

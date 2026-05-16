@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppMasterDataRouteImport } from './routes/_app/master-data'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppConsumablesRouteImport } from './routes/_app/consumables'
 import { Route as AppAssetsRouteImport } from './routes/_app/assets'
 
 const LoginRoute = LoginRouteImport.update({
@@ -40,6 +41,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppConsumablesRoute = AppConsumablesRouteImport.update({
+  id: '/consumables',
+  path: '/consumables',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAssetsRoute = AppAssetsRouteImport.update({
   id: '/assets',
   path: '/assets',
@@ -50,6 +56,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/assets': typeof AppAssetsRoute
+  '/consumables': typeof AppConsumablesRoute
   '/dashboard': typeof AppDashboardRoute
   '/master-data': typeof AppMasterDataRoute
 }
@@ -57,6 +64,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/assets': typeof AppAssetsRoute
+  '/consumables': typeof AppConsumablesRoute
   '/dashboard': typeof AppDashboardRoute
   '/master-data': typeof AppMasterDataRoute
 }
@@ -66,20 +74,34 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/assets': typeof AppAssetsRoute
+  '/_app/consumables': typeof AppConsumablesRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/master-data': typeof AppMasterDataRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/assets' | '/dashboard' | '/master-data'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/assets'
+    | '/consumables'
+    | '/dashboard'
+    | '/master-data'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/assets' | '/dashboard' | '/master-data'
+  to:
+    | '/'
+    | '/login'
+    | '/assets'
+    | '/consumables'
+    | '/dashboard'
+    | '/master-data'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/login'
     | '/_app/assets'
+    | '/_app/consumables'
     | '/_app/dashboard'
     | '/_app/master-data'
   fileRoutesById: FileRoutesById
@@ -127,6 +149,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/consumables': {
+      id: '/_app/consumables'
+      path: '/consumables'
+      fullPath: '/consumables'
+      preLoaderRoute: typeof AppConsumablesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/assets': {
       id: '/_app/assets'
       path: '/assets'
@@ -139,12 +168,14 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAssetsRoute: typeof AppAssetsRoute
+  AppConsumablesRoute: typeof AppConsumablesRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppMasterDataRoute: typeof AppMasterDataRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAssetsRoute: AppAssetsRoute,
+  AppConsumablesRoute: AppConsumablesRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppMasterDataRoute: AppMasterDataRoute,
 }
