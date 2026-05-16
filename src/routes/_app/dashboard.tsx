@@ -33,15 +33,17 @@ function Dashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [assetsRes, statusesRes, categoriesRes, recentRes] = await Promise.all([
+      const [assetsRes, statusesRes, categoriesRes, recentRes, consumablesRes] = await Promise.all([
         supabase.from("assets").select("id, status_id, category_id, warranty_expiry_date, name, updated_at, asset_code"),
         supabase.from("asset_statuses").select("id, name, color"),
         supabase.from("categories").select("id, name"),
         supabase.from("assets").select("id, name, asset_code, updated_at").order("updated_at", { ascending: false }).limit(6),
+        supabase.from("consumables").select("id, equipment_type, equipment_name, quantity"),
       ]);
       const assets = assetsRes.data ?? [];
       const statuses = statusesRes.data ?? [];
       const categories = categoriesRes.data ?? [];
+      const consumables = consumablesRes.data ?? [];
 
       const statusMap = new Map(statuses.map(s => [s.id, s]));
       const catMap = new Map(categories.map(c => [c.id, c.name]));
