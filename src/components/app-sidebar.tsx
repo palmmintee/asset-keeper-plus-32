@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 const mainItems = [
   { title: "แดชบอร์ด", url: "/dashboard", icon: LayoutDashboard },
   { title: "อุปกรณ์ IT", url: "/assets", icon: Boxes },
+  { title: "อุปกรณ์สิ้นเปลือง", url: "/consumables", icon: Package },
 ];
 
 const adminItems = [
