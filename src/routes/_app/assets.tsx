@@ -182,6 +182,7 @@ function AssetsPage() {
                 <th className="text-left px-4 py-3 font-medium">หมวดหมู่</th>
                 <th className="text-left px-4 py-3 font-medium">สถานที่</th>
                 <th className="text-left px-4 py-3 font-medium">สถานะ</th>
+                <th className="text-left px-4 py-3 font-medium">อายุการใช้งาน</th>
                 <th className="text-left px-4 py-3 font-medium">ประกันคงเหลือ</th>
                 <th className="text-right px-4 py-3 font-medium">จัดการ</th>
               </tr>
