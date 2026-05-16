@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Boxes, Activity, AlertTriangle, ShieldAlert, PackageCheck, ShieldCheck } from "lucide-react";
+import { Boxes, Activity, AlertTriangle, ShieldAlert, PackageCheck, ShieldCheck, Package, PackageX } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
