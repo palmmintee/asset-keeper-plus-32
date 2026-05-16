@@ -165,6 +165,33 @@ export type Database = {
         }
         Relationships: []
       }
+      consumables: {
+        Row: {
+          created_at: string
+          equipment_name: string
+          equipment_type: string
+          id: string
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          equipment_name: string
+          equipment_type: string
+          id?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          equipment_name?: string
+          equipment_type?: string
+          id?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           created_at: string
