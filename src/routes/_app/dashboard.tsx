@@ -72,11 +72,16 @@ function Dashboard() {
       const borrowed = assets.filter(a => statusMap.get(a.status_id ?? "")?.name === "ถูกยืม").length;
       const disposed = assets.filter(a => statusMap.get(a.status_id ?? "")?.name === "จำหน่ายแล้ว").length;
 
+      const consumableTotal = consumables.reduce((s, c) => s + (c.quantity ?? 0), 0);
+      const consumableLow = consumables.filter(c => (c.quantity ?? 0) < 5);
+
       return {
         total: assets.length,
         inUse, borrowed, disposed, broken, expiringSoon,
         byStatus, byCategory,
         recent: recentRes.data ?? [],
+        consumableTotal,
+        consumableLow,
       };
     },
   });
