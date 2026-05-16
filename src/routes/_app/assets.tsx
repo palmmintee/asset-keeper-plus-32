@@ -17,7 +17,21 @@ import { toast } from "sonner";
 import { logAudit } from "@/lib/audit";
 import { QRCodeSVG } from "qrcode.react";
 import * as XLSX from "xlsx";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, differenceInMonths, differenceInYears } from "date-fns";
+
+function formatAge(purchaseDate: string | null) {
+  if (!purchaseDate) return null;
+  const d = new Date(purchaseDate);
+  const now = new Date();
+  const years = differenceInYears(now, d);
+  const months = differenceInMonths(now, d) - years * 12;
+  if (years <= 0 && months <= 0) {
+    const days = differenceInDays(now, d);
+    return days <= 0 ? "วันนี้" : `${days} วัน`;
+  }
+  if (years <= 0) return `${months} เดือน`;
+  return months > 0 ? `${years} ปี ${months} เดือน` : `${years} ปี`;
+}
 
 export const Route = createFileRoute("/_app/assets")({ component: AssetsPage });
 
