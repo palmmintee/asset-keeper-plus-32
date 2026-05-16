@@ -189,12 +189,13 @@ function AssetsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {isLoading ? (
-                <tr><td colSpan={7} className="text-center py-12"><Loader2 className="h-5 w-5 animate-spin inline" /></td></tr>
+                <tr><td colSpan={8} className="text-center py-12"><Loader2 className="h-5 w-5 animate-spin inline" /></td></tr>
               ) : paged.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-muted-foreground">ไม่พบข้อมูล</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-muted-foreground">ไม่พบข้อมูล</td></tr>
               ) : paged.map(a => {
                 const status = statusMap.get(a.status_id ?? "") as any;
                 const warrantyLeft = a.warranty_expiry_date ? differenceInDays(new Date(a.warranty_expiry_date), new Date()) : null;
+                const age = formatAge(a.purchase_date);
                 return (
                   <tr key={a.id} className="hover:bg-muted/30">
                     <td className="px-4 py-3 font-mono text-xs">{a.asset_code}</td>
@@ -206,6 +207,9 @@ function AssetsPage() {
                     <td className="px-4 py-3">{locMap.get(a.location_id ?? "") ?? "-"}</td>
                     <td className="px-4 py-3">
                       {status ? <Badge style={{ backgroundColor: status.color + "20", color: status.color, borderColor: status.color + "40" }} variant="outline">{status.name}</Badge> : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {age ?? <span className="text-muted-foreground">-</span>}
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {warrantyLeft === null ? <span className="text-muted-foreground">-</span> :
