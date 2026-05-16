@@ -142,6 +142,7 @@ function AssetsPage() {
                 <Button onClick={() => setEditing(null)}><Plus className="h-4 w-4 mr-2" />เพิ่มอุปกรณ์</Button>
               </DialogTrigger>
               <AssetForm
+                key={editing?.id ?? "new"}
                 editing={editing}
                 categories={categories} locations={locations} statuses={statuses}
                 onClose={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["assets"] }); qc.invalidateQueries({ queryKey: ["dashboard-stats"] }); }}
