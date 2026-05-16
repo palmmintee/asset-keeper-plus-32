@@ -64,7 +64,7 @@ function ConsumablesPage() {
     if (!deleteId) return;
     const { error } = await supabase.from("consumables").delete().eq("id", deleteId);
     if (error) return toast.error(error.message);
-    await logAudit("delete", "consumable", deleteId);
+    await logAudit({ action: "delete", entityType: "consumable", entityId: deleteId });
     toast.success("ลบเรียบร้อย");
     setDeleteId(null);
     qc.invalidateQueries({ queryKey: ["consumables"] });
@@ -221,7 +221,7 @@ function ConsumableForm({ editing, onClose, onSaved }: { editing: Consumable | n
 
     setSaving(false);
     if (error) return toast.error(error.message);
-    await logAudit(editing ? "update" : "create", "consumable", editing?.id);
+    await logAudit({ action: editing ? "update" : "create", entityType: "consumable", entityId: editing?.id });
     toast.success(editing ? "บันทึกการแก้ไขเรียบร้อย" : "เพิ่มเรียบร้อย");
     onSaved();
     onClose();
