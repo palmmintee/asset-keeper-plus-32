@@ -17,7 +17,7 @@ function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard" });
