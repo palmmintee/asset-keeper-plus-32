@@ -17,7 +17,21 @@ import { toast } from "sonner";
 import { logAudit } from "@/lib/audit";
 import { QRCodeSVG } from "qrcode.react";
 import * as XLSX from "xlsx";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, differenceInMonths, differenceInYears } from "date-fns";
+
+function formatAge(purchaseDate: string | null) {
+  if (!purchaseDate) return null;
+  const d = new Date(purchaseDate);
+  const now = new Date();
+  const years = differenceInYears(now, d);
+  const months = differenceInMonths(now, d) - years * 12;
+  if (years <= 0 && months <= 0) {
+    const days = differenceInDays(now, d);
+    return days <= 0 ? "วันนี้" : `${days} วัน`;
+  }
+  if (years <= 0) return `${months} เดือน`;
+  return months > 0 ? `${years} ปี ${months} เดือน` : `${years} ปี`;
+}
 
 export const Route = createFileRoute("/_app/assets")({ component: AssetsPage });
 
@@ -128,6 +142,7 @@ function AssetsPage() {
                 <Button onClick={() => setEditing(null)}><Plus className="h-4 w-4 mr-2" />เพิ่มอุปกรณ์</Button>
               </DialogTrigger>
               <AssetForm
+                key={editing?.id ?? "new"}
                 editing={editing}
                 categories={categories} locations={locations} statuses={statuses}
                 onClose={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["assets"] }); qc.invalidateQueries({ queryKey: ["dashboard-stats"] }); }}
@@ -168,18 +183,20 @@ function AssetsPage() {
                 <th className="text-left px-4 py-3 font-medium">หมวดหมู่</th>
                 <th className="text-left px-4 py-3 font-medium">สถานที่</th>
                 <th className="text-left px-4 py-3 font-medium">สถานะ</th>
+                <th className="text-left px-4 py-3 font-medium">อายุการใช้งาน</th>
                 <th className="text-left px-4 py-3 font-medium">ประกันคงเหลือ</th>
                 <th className="text-right px-4 py-3 font-medium">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {isLoading ? (
-                <tr><td colSpan={7} className="text-center py-12"><Loader2 className="h-5 w-5 animate-spin inline" /></td></tr>
+                <tr><td colSpan={8} className="text-center py-12"><Loader2 className="h-5 w-5 animate-spin inline" /></td></tr>
               ) : paged.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-muted-foreground">ไม่พบข้อมูล</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-muted-foreground">ไม่พบข้อมูล</td></tr>
               ) : paged.map(a => {
                 const status = statusMap.get(a.status_id ?? "") as any;
                 const warrantyLeft = a.warranty_expiry_date ? differenceInDays(new Date(a.warranty_expiry_date), new Date()) : null;
+                const age = formatAge(a.purchase_date);
                 return (
                   <tr key={a.id} className="hover:bg-muted/30">
                     <td className="px-4 py-3 font-mono text-xs">{a.asset_code}</td>
@@ -191,6 +208,9 @@ function AssetsPage() {
                     <td className="px-4 py-3">{locMap.get(a.location_id ?? "") ?? "-"}</td>
                     <td className="px-4 py-3">
                       {status ? <Badge style={{ backgroundColor: status.color + "20", color: status.color, borderColor: status.color + "40" }} variant="outline">{status.name}</Badge> : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {age ?? <span className="text-muted-foreground">-</span>}
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {warrantyLeft === null ? <span className="text-muted-foreground">-</span> :
