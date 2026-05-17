@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppMasterDataRouteImport } from './routes/_app/master-data'
+import { Route as AppDisposalsRouteImport } from './routes/_app/disposals'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppConsumablesRouteImport } from './routes/_app/consumables'
 import { Route as AppAssetsRouteImport } from './routes/_app/assets'
@@ -34,6 +35,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppMasterDataRoute = AppMasterDataRouteImport.update({
   id: '/master-data',
   path: '/master-data',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDisposalsRoute = AppDisposalsRouteImport.update({
+  id: '/disposals',
+  path: '/disposals',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/assets': typeof AppAssetsRoute
   '/consumables': typeof AppConsumablesRoute
   '/dashboard': typeof AppDashboardRoute
+  '/disposals': typeof AppDisposalsRoute
   '/master-data': typeof AppMasterDataRoute
 }
 export interface FileRoutesByTo {
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/assets': typeof AppAssetsRoute
   '/consumables': typeof AppConsumablesRoute
   '/dashboard': typeof AppDashboardRoute
+  '/disposals': typeof AppDisposalsRoute
   '/master-data': typeof AppMasterDataRoute
 }
 export interface FileRoutesById {
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/_app/assets': typeof AppAssetsRoute
   '/_app/consumables': typeof AppConsumablesRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/disposals': typeof AppDisposalsRoute
   '/_app/master-data': typeof AppMasterDataRoute
 }
 export interface FileRouteTypes {
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
     | '/assets'
     | '/consumables'
     | '/dashboard'
+    | '/disposals'
     | '/master-data'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
     | '/assets'
     | '/consumables'
     | '/dashboard'
+    | '/disposals'
     | '/master-data'
   id:
     | '__root__'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/_app/assets'
     | '/_app/consumables'
     | '/_app/dashboard'
+    | '/_app/disposals'
     | '/_app/master-data'
   fileRoutesById: FileRoutesById
 }
@@ -142,6 +154,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMasterDataRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/disposals': {
+      id: '/_app/disposals'
+      path: '/disposals'
+      fullPath: '/disposals'
+      preLoaderRoute: typeof AppDisposalsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -170,6 +189,7 @@ interface AppRouteChildren {
   AppAssetsRoute: typeof AppAssetsRoute
   AppConsumablesRoute: typeof AppConsumablesRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppDisposalsRoute: typeof AppDisposalsRoute
   AppMasterDataRoute: typeof AppMasterDataRoute
 }
 
@@ -177,6 +197,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAssetsRoute: AppAssetsRoute,
   AppConsumablesRoute: AppConsumablesRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppDisposalsRoute: AppDisposalsRoute,
   AppMasterDataRoute: AppMasterDataRoute,
 }
 
@@ -190,3 +211,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
