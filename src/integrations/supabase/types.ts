@@ -359,7 +359,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      next_disposal_no: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user" | "auditor"
