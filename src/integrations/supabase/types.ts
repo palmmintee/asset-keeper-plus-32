@@ -192,6 +192,95 @@ export type Database = {
         }
         Relationships: []
       }
+      disposal_items: {
+        Row: {
+          asset_code: string | null
+          asset_id: string | null
+          asset_name: string | null
+          consumable_id: string | null
+          consumable_name: string | null
+          consumable_type: string | null
+          created_at: string
+          disposal_id: string
+          id: string
+          item_type: string
+          quantity: number
+        }
+        Insert: {
+          asset_code?: string | null
+          asset_id?: string | null
+          asset_name?: string | null
+          consumable_id?: string | null
+          consumable_name?: string | null
+          consumable_type?: string | null
+          created_at?: string
+          disposal_id: string
+          id?: string
+          item_type: string
+          quantity?: number
+        }
+        Update: {
+          asset_code?: string | null
+          asset_id?: string | null
+          asset_name?: string | null
+          consumable_id?: string | null
+          consumable_name?: string | null
+          consumable_type?: string | null
+          created_at?: string
+          disposal_id?: string
+          id?: string
+          item_type?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disposal_items_disposal_id_fkey"
+            columns: ["disposal_id"]
+            isOneToOne: false
+            referencedRelation: "disposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disposals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department: string
+          disposal_date: string
+          disposal_no: string
+          employee_code: string
+          employee_name: string
+          id: string
+          note: string | null
+          transfer_document_no: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department: string
+          disposal_date?: string
+          disposal_no: string
+          employee_code: string
+          employee_name: string
+          id?: string
+          note?: string | null
+          transfer_document_no: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          disposal_date?: string
+          disposal_no?: string
+          employee_code?: string
+          employee_name?: string
+          id?: string
+          note?: string | null
+          transfer_document_no?: string
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           created_at: string

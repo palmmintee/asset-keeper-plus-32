@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Boxes, Database, Users, ScrollText, LogOut, Moon, Sun, Settings, Package,
+  LayoutDashboard, Boxes, Database, Users, ScrollText, LogOut, Moon, Sun, Settings, Package, Archive,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -14,6 +14,7 @@ const mainItems = [
   { title: "แดชบอร์ด", url: "/dashboard", icon: LayoutDashboard },
   { title: "อุปกรณ์ IT", url: "/assets", icon: Boxes },
   { title: "อุปกรณ์สิ้นเปลือง", url: "/consumables", icon: Package },
+  { title: "จำหน่ายอุปกรณ์", url: "/disposals", icon: Archive },
 ];
 
 const adminItems = [
