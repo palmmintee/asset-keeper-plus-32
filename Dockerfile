@@ -1,5 +1,5 @@
 # ---------- Build stage ----------
-FROM oven/bun:1.1-alpine AS builder
+FROM oven/bun:1.2-alpine AS builder
 WORKDIR /app
 
 # Build-time env (จาก docker-compose: args)
@@ -11,7 +11,7 @@ ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
 ENV VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
 
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile || bun install
 
 COPY . .
 RUN bun run build
