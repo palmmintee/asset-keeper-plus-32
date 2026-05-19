@@ -17,8 +17,17 @@ COPY . .
 RUN bun run build
 
 # ---------- Runtime stage ----------
-FROM nginx:alpine AS runner
-COPY --from=builder /app/dist/client /usr/share/nginx/html
-COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+# แอปเป็น TanStack Start SSR (Cloudflare Worker) — รันด้วย wrangler
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+# ติดตั้ง wrangler (workerd runtime) แบบ global
+RUN npm install -g wrangler@4
+
+# คัดลอกผลลัพธ์ build ทั้ง worker + static assets
+COPY --from=builder /app/dist ./dist
+
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# รัน worker ที่ build แล้ว — config อยู่ใน dist/server/wrangler.json
+WORKDIR /app/dist/server
+CMD ["wrangler", "dev", "--ip", "0.0.0.0", "--port", "80", "--local", "--no-show-interactive-dev-session"]
