@@ -18,7 +18,8 @@ RUN bun run build
 
 # ---------- Runtime stage ----------
 # แอปเป็น TanStack Start SSR (Cloudflare Worker) — รันด้วย wrangler
-FROM node:20-alpine AS runner
+# ต้องใช้ glibc base (ไม่ใช่ alpine) เพราะ workerd binary ของ Cloudflare เป็น glibc-only
+FROM node:20-slim AS runner
 WORKDIR /app
 
 # ติดตั้ง wrangler (workerd runtime) แบบ global
