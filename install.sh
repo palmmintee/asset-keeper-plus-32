@@ -1,39 +1,75 @@
 #!/usr/bin/env bash
 # ============================================================
-#  IT Stock - One-shot installer for Ubuntu Server
-#  Usage:  sudo bash install.sh
+#  IT Stock - PM2 Installer for Ubuntu Server (IP 10.20.10.80)
+#  ใช้สำหรับติดตั้งและรันด้วย PM2 (ไม่ใช้ Docker)
+#
+#  Backend (PostgreSQL/Auth/Storage) ใช้ Supabase Cloud อยู่แล้ว
+#  (ตามค่าใน .env: VITE_SUPABASE_URL)
+#
+#  Usage:  bash install.sh
 # ============================================================
 set -e
 
-echo ">>> [1/4] อัปเดต apt..."
-sudo apt update -y && sudo apt upgrade -y
-sudo apt install -y curl git ca-certificates ufw
+echo ">>> [1/5] อัปเดต apt + ติดตั้ง dependencies พื้นฐาน..."
+sudo apt update -y
+sudo apt install -y curl git ca-certificates ufw unzip
 
-if ! command -v docker >/dev/null 2>&1; then
-  echo ">>> [2/4] ติดตั้ง Docker..."
-  curl -fsSL https://get.docker.com | sudo sh
-  sudo usermod -aG docker "$USER" || true
+if ! command -v node >/dev/null 2>&1; then
+  echo ">>> [2/5] ติดตั้ง Node.js 20 LTS..."
+  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  sudo apt install -y nodejs
 else
-  echo ">>> [2/4] Docker มีอยู่แล้ว — ข้าม"
+  echo ">>> [2/5] Node.js มีอยู่แล้ว ($(node -v)) — ข้าม"
+fi
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo ">>> [3/5] ติดตั้ง Bun..."
+  curl -fsSL https://bun.sh/install | bash
+  export BUN_INSTALL="$HOME/.bun"
+  export PATH="$BUN_INSTALL/bin:$PATH"
+  # เพิ่มเข้า .bashrc ถาวร
+  grep -q 'BUN_INSTALL' ~/.bashrc || cat >> ~/.bashrc <<'EOF'
+
+# Bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+EOF
+else
+  echo ">>> [3/5] Bun มีอยู่แล้ว — ข้าม"
+fi
+
+if ! command -v pm2 >/dev/null 2>&1; then
+  echo ">>> [4/5] ติดตั้ง PM2 (process manager)..."
+  sudo npm install -g pm2 wrangler
+else
+  echo ">>> [4/5] PM2 มีอยู่แล้ว — ข้าม"
 fi
 
 if [ ! -f .env ]; then
-  echo ">>> [3/4] สร้างไฟล์ .env จาก .env.example"
+  echo ">>> สร้างไฟล์ .env จาก .env.example"
   cp .env.example .env
-  echo "    -> แก้ค่าใน .env (PUBLIC_URL, POSTGRES_PASSWORD, JWT_SECRET) ก่อนรันจริง"
-else
-  echo ">>> [3/4] พบ .env อยู่แล้ว — ข้าม"
+  echo "    -> แก้ค่าใน .env ก่อน build (nano .env)"
 fi
 
-echo ">>> [4/4] เปิด firewall ports 8080 / 8000 / 3001"
+echo ">>> [5/5] เปิด firewall port 8080"
 sudo ufw allow 8080/tcp || true
-sudo ufw allow 8000/tcp || true
-sudo ufw allow 3001/tcp || true
 
 echo ""
 echo "============================================================"
-echo " ติดตั้งเสร็จ! ขั้นตอนถัดไป:"
-echo "   1) แก้ไขไฟล์ .env  (nano .env)"
-echo "   2) เริ่มระบบ:        docker compose up -d --build"
-echo "   3) เข้าใช้งาน:       http://10.20.10.80:8080"
+echo " ติดตั้งเครื่องมือเสร็จแล้ว! ขั้นตอนถัดไป:"
+echo ""
+echo "   1) แก้ไขไฟล์ .env (ถ้าจำเป็น):  nano .env"
+echo ""
+echo "   2) ติดตั้ง dependencies + build:"
+echo "        bun install"
+echo "        bun run build"
+echo ""
+echo "   3) Start ด้วย PM2:"
+echo "        pm2 start ecosystem.config.cjs"
+echo "        pm2 save"
+echo "        pm2 startup       # copy คำสั่งที่ขึ้นมาแล้วรันด้วย sudo"
+echo ""
+echo "   4) เข้าใช้งานที่: http://10.20.10.80:8080"
+echo ""
+echo " หรือใช้สคริปต์ build+start แบบรวบ:  bash update.sh"
 echo "============================================================"

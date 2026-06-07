@@ -1,255 +1,183 @@
 # IT Stock Management System
 
-ระบบจัดการสต็อกอุปกรณ์ IT — React + TypeScript + Tailwind + Supabase (self-hosted)
+ระบบจัดการสต็อกอุปกรณ์ IT — React 19 + TypeScript + Tailwind v4 + TanStack Start + Supabase
 
-> **ตัวอย่างนี้ตั้ง default ให้ใช้กับเครื่อง Ubuntu IP `10.20.10.80`**
-> ถ้า IP ของคุณเป็นอย่างอื่น แก้ในไฟล์ `.env` ตัวเดียว แล้ว rebuild
+> **Deploy แบบ PM2 บน Ubuntu Server (IP `10.20.10.80`, port `8080`)**
+> Backend ใช้ Supabase Cloud (ตามค่าใน `.env`)
 
 ---
 
 ## 📑 สารบัญ
-
-1. [ติดตั้งครั้งแรก (Quick Start)](#-1-ติดตั้งครั้งแรก-quick-start)
+1. [ติดตั้งครั้งแรก](#-1-ติดตั้งครั้งแรก)
 2. [การตั้งค่า .env](#-2-การตั้งค่า-env)
-3. [โครงสร้าง Dockerfile / docker-compose.yml](#-3-โครงสร้าง-dockerfile--docker-composeyml)
-4. [การใช้งานหลังติดตั้ง](#-4-การใช้งานหลังติดตั้ง)
-5. [การอัปเดตระบบ](#-5-การอัปเดตระบบ)
-6. [การถอนการติดตั้ง](#-6-การถอนการติดตั้ง)
-7. [Backup / Restore](#-7-backup--restore)
-8. [Troubleshooting](#-8-troubleshooting)
+3. [รัน / Restart / Stop ด้วย PM2](#-3-รัน--restart--stop-ด้วย-pm2)
+4. [อัปเดตระบบ](#-4-อัปเดตระบบ)
+5. [ถอนการติดตั้ง](#-5-ถอนการติดตั้ง)
+6. [Troubleshooting](#-6-troubleshooting)
 
 ---
 
-## 🚀 1. ติดตั้งครั้งแรก (Quick Start)
+## 🚀 1. ติดตั้งครั้งแรก
 
-### ข้อกำหนดเครื่อง Server
-- Ubuntu 22.04 LTS ขึ้นไป
-- RAM ≥ 4 GB, Disk ≥ 20 GB
-- เปิดพอร์ต: `8080` (Web UI), `8000` (Supabase API), `3001` (Supabase Studio)
-- IP ใน LAN: `10.20.10.80` (ตัวอย่าง)
+### ข้อกำหนดเครื่อง
+- Ubuntu 20.04 LTS ขึ้นไป
+- RAM ≥ 2 GB, Disk ≥ 5 GB
+- มีอินเทอร์เน็ตเพื่อโหลด Node.js / Bun / dependencies
 
-### วิธีติดตั้งแบบสั้น 3 บรรทัด
+### ขั้นตอน
 
 ```bash
+# 1) Clone โปรเจกต์
 git clone <YOUR_REPO_URL> it-stock
 cd it-stock
-sudo bash install.sh
+
+# 2) ติดตั้ง Node.js 20 + Bun + PM2 + เปิด firewall
+bash install.sh
+
+# โหลด PATH ของ bun เข้า shell ปัจจุบัน
+source ~/.bashrc
+
+# 3) ติดตั้ง dependencies + build
+bun install
+bun run build
+
+# 4) Start ด้วย PM2
+pm2 start ecosystem.config.cjs
+pm2 save
+
+# 5) ตั้งให้รันอัตโนมัติเมื่อ boot
+pm2 startup
+# >>> copy คำสั่งที่ PM2 แนะนำขึ้นมา แล้วรันด้วย sudo <<<
 ```
 
-สคริปต์ `install.sh` จะทำให้อัตโนมัติ:
-- ติดตั้ง Docker + Docker Compose
-- สร้าง `.env` จาก `.env.example` (ค่า default ใช้กับ IP 10.20.10.80)
-- เปิด firewall ให้พอร์ต 8080 / 8000 / 3001
+เปิดเว็บที่ **http://10.20.10.80:8080**
 
-หลังจากนั้น:
-
-```bash
-nano .env                      # แก้รหัสผ่านและ JWT_SECRET (ดูข้อ 2)
-docker compose up -d --build   # เริ่มระบบ (ครั้งแรกใช้เวลา ~2-5 นาที)
-docker compose ps              # ตรวจสถานะ
-```
-
-เปิดเว็บที่ **http://10.20.10.80:8080** — ผู้ใช้คนแรกที่สมัครจะได้สิทธิ์ **Admin** อัตโนมัติ
+> หรือใช้ทางลัด: หลังจาก `bash install.sh` แล้ว ให้รัน `bash update.sh`
+> — ทำ `bun install → build → pm2 start/restart` ให้ในคำสั่งเดียว
 
 ---
 
 ## 🔧 2. การตั้งค่า `.env`
 
-| ตัวแปร | ค่าที่ต้องตั้ง | คำอธิบาย |
-|---|---|---|
-| `PUBLIC_URL` | `http://10.20.10.80:8000` | URL ของ Supabase API ที่ browser เครื่อง client เข้าถึงได้ (ต้องเป็น IP จริง ไม่ใช่ localhost) |
-| `POSTGRES_PASSWORD` | (สุ่มใหม่) | รหัสผ่าน PostgreSQL — **ห้ามใช้ค่า default** |
-| `JWT_SECRET` | (สุ่มใหม่ ≥ 32 ตัว) | secret สำหรับสร้าง JWT token |
-| `ANON_KEY` | (สร้างจาก JWT_SECRET) | public key สำหรับ frontend |
-| `SERVICE_ROLE_KEY` | (สร้างจาก JWT_SECRET) | admin key (ห้ามเผยแพร่) |
+ไฟล์ `.env` ที่ใช้จริงมีตัวแปรของ Supabase Cloud อยู่แล้ว:
 
-### สุ่มค่าใหม่อย่างปลอดภัย
-
-```bash
-# 1) สุ่ม POSTGRES_PASSWORD
-openssl rand -base64 24
-
-# 2) สุ่ม JWT_SECRET
-openssl rand -base64 48
+```env
+VITE_SUPABASE_URL="https://<project>.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY="<anon-key>"
+VITE_SUPABASE_PROJECT_ID="<project-id>"
+SUPABASE_URL="https://<project>.supabase.co"
+SUPABASE_PUBLISHABLE_KEY="<anon-key>"
 ```
 
-### สร้าง ANON_KEY / SERVICE_ROLE_KEY ให้ตรงกับ JWT_SECRET
+> ⚠️ ตัวแปร `VITE_*` ถูก **ฝังเข้า bundle ตอน build** ไม่ใช่อ่านตอน runtime
+> เพราะฉะนั้นทุกครั้งที่แก้ `.env` ต้อง `bun run build` แล้ว `pm2 restart it-stock` ใหม่
 
-ไปที่ https://supabase.com/docs/guides/self-hosting/docker#generate-api-keys
-→ วาง `JWT_SECRET` ที่ได้ → จะได้ `ANON_KEY` และ `SERVICE_ROLE_KEY` → นำมาใส่ใน `.env`
-
-> ⚠️ ทุกครั้งที่เปลี่ยน `JWT_SECRET` ต้อง regenerate `ANON_KEY` และ `SERVICE_ROLE_KEY` ใหม่ทั้งคู่ ไม่งั้น login ไม่ผ่าน
-
-### เปลี่ยน IP Server
-
-ถ้าย้ายไปเครื่องอื่นที่ IP ไม่ใช่ `10.20.10.80`:
-
-```bash
-nano .env                      # แก้ PUBLIC_URL=http://<NEW_IP>:8000
-docker compose up -d --build app   # rebuild เฉพาะ frontend
-```
+ถ้าจะเปลี่ยน port หรือ IP ที่รัน: แก้ใน `ecosystem.config.cjs` (`--port 8080` / `--ip 0.0.0.0`)
 
 ---
 
-## 🐳 3. โครงสร้าง Dockerfile / docker-compose.yml
-
-### Dockerfile (ของ Frontend)
-- **Build stage**: ใช้ `oven/bun:1.1-alpine` คอมไพล์ React → static files
-- **Runtime stage**: ใช้ `nginx:alpine` เสิร์ฟไฟล์ที่ port 80
-- รับค่า build args: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`
-
-### docker-compose.yml มี 8 services
-| Service | Port | หน้าที่ |
-|---|---|---|
-| `db` | 5432 | PostgreSQL 15 + auto-run migrations จาก `supabase/migrations/` |
-| `auth` | – | GoTrue (จัดการ JWT auth, auto-confirm email เปิดอยู่) |
-| `rest` | – | PostgREST (REST API อัตโนมัติจาก schema) |
-| `storage` | – | Supabase Storage (เก็บรูป asset) |
-| `meta` | – | pg-meta (ใช้คู่กับ Studio) |
-| `kong` | 8000 | API Gateway รวม endpoint `/auth/v1`, `/rest/v1`, `/storage/v1` |
-| `studio` | 3001 | Web UI จัดการ Database |
-| `app` | 8080 | Frontend (Nginx + React build) |
-
-> Migrations ใน `supabase/migrations/*.sql` จะถูกรันอัตโนมัติ **ครั้งแรก** ที่ container `db` start (mount เข้า `/docker-entrypoint-initdb.d/`)
-
----
-
-## 🌐 4. การใช้งานหลังติดตั้ง
-
-| บริการ | URL |
-|---|---|
-| **ระบบ IT Stock (Frontend)** | http://10.20.10.80:8080 |
-| **Supabase Studio** (จัดการ DB ผ่านเว็บ) | http://10.20.10.80:3001 |
-| Supabase API (Kong) | http://10.20.10.80:8000 |
-
-### คำสั่งที่ใช้บ่อย
+## 🟢 3. รัน / Restart / Stop ด้วย PM2
 
 ```bash
-docker compose ps                  # ดูสถานะ container
-docker compose logs -f app         # ดู log ของ frontend
-docker compose logs -f db          # ดู log ของ database
-docker compose restart app         # restart เฉพาะ frontend
-docker compose stop                # หยุดทั้งหมด
-docker compose start               # เริ่มอีกครั้ง
+pm2 start ecosystem.config.cjs   # เริ่ม
+pm2 restart it-stock              # restart
+pm2 stop it-stock                 # หยุด
+pm2 delete it-stock               # ลบออกจาก PM2
+pm2 logs it-stock                 # ดู log แบบ realtime
+pm2 logs it-stock --lines 200     # ดู log 200 บรรทัดล่าสุด
+pm2 status                        # ดูสถานะทั้งหมด
+pm2 monit                         # หน้า monitor แบบ interactive
+pm2 save                          # บันทึก state (กัน reboot แล้วหาย)
+```
+
+### ตั้งให้ start อัตโนมัติเมื่อ boot
+```bash
+pm2 startup
+# คัดลอกคำสั่งที่ขึ้นมา (ขึ้นต้นด้วย sudo env ...) แล้วรัน
+pm2 save
 ```
 
 ---
 
-## 🔄 5. การอัปเดตระบบ
-
-วิธีเร็ว — ใช้สคริปต์:
+## 🔄 4. อัปเดตระบบ
 
 ```bash
 bash update.sh
 ```
 
-หรือทำเอง:
+สคริปต์จะทำ: `git pull → bun install → bun run build → pm2 restart it-stock`
 
-```bash
-git pull
-docker compose pull
-docker compose up -d --build
-```
-
-> ข้อมูลใน Database จะ**ไม่หาย** เพราะเก็บใน Docker volume (`db-data`)
+> ❗ ทุกครั้งที่แก้ `.env` หรือโค้ดต้อง **build ใหม่** เพราะตัวแปร `VITE_*` ถูก inline เข้า bundle
 
 ---
 
-## 🗑️ 6. การถอนการติดตั้ง
+## 🗑️ 5. ถอนการติดตั้ง
 
 ```bash
 bash uninstall.sh
 ```
 
-สคริปต์จะถามว่าจะลบข้อมูลด้วยหรือไม่:
-- **ไม่ลบข้อมูล** → `docker compose down` (เก็บ volume ไว้ — ติดตั้งใหม่ครั้งหน้า ข้อมูลกลับมา)
-- **ลบข้อมูลทั้งหมด** → `docker compose down -v` (ลบ volume `db-data`, `storage-data` ถาวร)
-
-ถ้าต้องการลบ Docker images ของโปรเจกต์ด้วย:
-```bash
-docker image prune -a
-```
+จะถาม 2 ข้อ:
+1. ลบ `node_modules` / `dist` ในโฟลเดอร์โปรเจกต์หรือไม่
+2. ลบ PM2 ทั้งหมดออกจากระบบหรือไม่ (เลือก *No* ถ้ามี app อื่นใช้ PM2 อยู่)
 
 ---
 
-## 💾 7. Backup / Restore
-
-### Backup ฐานข้อมูล (ทำสม่ำเสมอ!)
-```bash
-docker compose exec db pg_dump -U postgres postgres > backup_$(date +%F).sql
-```
-
-### Restore
-```bash
-cat backup_2026-05-18.sql | docker compose exec -T db psql -U postgres postgres
-```
-
-### Backup ไฟล์ใน Storage (รูป asset)
-```bash
-docker run --rm -v it-stock_storage-data:/data -v $(pwd):/backup alpine \
-  tar czf /backup/storage_$(date +%F).tar.gz -C /data .
-```
-
-### ตั้ง cron backup อัตโนมัติทุกวันตอนตี 2
-```bash
-crontab -e
-# เพิ่มบรรทัด:
-0 2 * * * cd /home/$USER/it-stock && docker compose exec -T db pg_dump -U postgres postgres > /home/$USER/backups/db_$(date +\%F).sql
-```
-
----
-
-## 🛠️ 8. Troubleshooting
+## 🛠️ 6. Troubleshooting
 
 **❌ เข้าเว็บไม่ได้จากเครื่องอื่นใน LAN**
 ```bash
-sudo ufw status                    # ตรวจ firewall
+sudo ufw status
 sudo ufw allow 8080/tcp
-sudo ufw allow 8000/tcp
-ip addr show                       # ตรวจว่า IP ตรงกับ PUBLIC_URL
+ss -tlnp | grep 8080            # ตรวจว่า process listening จริง
+pm2 logs it-stock --lines 100   # ดู error
 ```
 
-**❌ Login ไม่ผ่าน / "Invalid JWT"**
-→ `ANON_KEY` ไม่ตรงกับ `JWT_SECRET` — generate ใหม่ตามข้อ 2 แล้ว:
+**❌ PM2 บอก `Error: spawn ... workerd ENOENT`**
+- `workerd` ต้องใช้ glibc — ปกติ Ubuntu มีอยู่แล้ว ไม่ใช่ปัญหา
+- ถ้าใช้ Alpine/Distro แปลก ๆ ให้ติดตั้ง: `sudo apt install -y libc6`
+- ลองรัน `npx wrangler --version` เพื่อดูว่า wrangler ติดตั้งสมบูรณ์
+
+**❌ Build ล้มเหลว / out of memory**
 ```bash
-docker compose up -d --build app auth
+NODE_OPTIONS="--max-old-space-size=4096" bun run build
 ```
 
-**❌ Frontend โหลด แต่เรียก API error / CORS**
-→ `PUBLIC_URL` ใน `.env` ต้องเป็น IP ที่ client เข้าถึงได้ (ไม่ใช่ `localhost`/`127.0.0.1`) แล้ว:
+**❌ Port 8080 ถูกใช้แล้ว**
+- แก้ `ecosystem.config.cjs` เปลี่ยน `--port 8080` → port อื่น
+- หรือหา process ที่ใช้อยู่: `sudo lsof -i :8080`
+
+**❌ Login ไม่ผ่าน / `Invalid JWT` / CORS error**
+- ตรวจค่า `VITE_SUPABASE_URL` และ `VITE_SUPABASE_PUBLISHABLE_KEY` ใน `.env`
+- หลังแก้แล้วต้อง `bun run build && pm2 restart it-stock`
+
+**❌ Reboot แล้ว PM2 ไม่ start เอง**
 ```bash
-docker compose up -d --build app
+pm2 startup           # ทำคำสั่งที่แนะนำ
+pm2 save              # บันทึก process list
 ```
 
-**❌ Database ไม่ start / migrations error**
+**❌ อยากดู log แบบ rotate**
 ```bash
-docker compose logs db | tail -100
+pm2 install pm2-logrotate
+pm2 set pm2-logrotate:max_size 10M
+pm2 set pm2-logrotate:retain 7
 ```
-ถ้าต้องการ reset database ทั้งหมด (⚠️ ข้อมูลหาย):
-```bash
-docker compose down -v
-docker compose up -d --build
-```
-
-**❌ Port ชนกับโปรแกรมอื่น**
-แก้ port mapping ในไฟล์ `docker-compose.yml` เช่นเปลี่ยน `"8080:80"` → `"9090:80"`
 
 ---
 
 ## 🧱 Tech Stack
-
 - **Frontend**: React 19 + TypeScript + Tailwind v4 + TanStack Router/Start
-- **Backend**: Supabase self-hosted (PostgREST + GoTrue + Storage + Kong)
-- **Database**: PostgreSQL 15
-- **Auth**: JWT + Row-Level Security + RBAC (admin/user/auditor)
+- **Backend**: Supabase Cloud (PostgreSQL + Auth + Storage)
+- **Runtime**: Cloudflare Worker (workerd) รันผ่าน `wrangler dev --local`
+- **Process Manager**: PM2
 
 ## 📋 Features
-
-- ✅ Login + RBAC (Admin/User/Auditor) — ผู้สมัครคนแรก = Admin
-- ✅ Dashboard สรุป + Widget สินเปลืองใกล้หมด
-- ✅ จัดการ Asset (CRUD + Search/Filter/Pagination + QR Code + แสดงอายุการใช้งาน)
+- ✅ Login + RBAC (Admin/User/Auditor)
+- ✅ Dashboard + Widget สินเปลืองใกล้หมด
+- ✅ จัดการ Asset (CRUD + Search/Filter + QR Code)
 - ✅ อุปกรณ์สิ้นเปลือง (Consumables)
-- ✅ จำหน่ายอุปกรณ์ (Disposal Management + Print/Export CSV)
+- ✅ จำหน่ายอุปกรณ์ (Disposal Management + Export CSV)
 - ✅ Master Data (Categories / Locations / Statuses)
 - ✅ Audit Log
 - ✅ Dark Mode + ภาษาไทย
