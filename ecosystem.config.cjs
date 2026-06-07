@@ -1,5 +1,5 @@
-// PM2 config สำหรับรัน IT Stock Frontend (TanStack Start / Cloudflare Worker build)
-// ใช้ wrangler รัน worker ที่ build แล้วใน dist/server/
+// PM2 config สำหรับรัน IT Stock Frontend หลังจาก `bun run build`
+// ใช้ Vite Preview จาก root โปรเจกต์ เพื่อให้เจอ build output และไฟล์ config ครบ
 //
 // คำสั่งที่ใช้บ่อย:
 //   pm2 start ecosystem.config.cjs
@@ -12,17 +12,15 @@ module.exports = {
   apps: [
     {
       name: "it-stock",
-      cwd: "./dist/server",
-      script: "npx",
+      cwd: __dirname,
+      script: "node_modules/vite/bin/vite.js",
       args: [
-        "wrangler",
-        "dev",
-        "--ip", "0.0.0.0",
-        "--port", "8080",
-        "--local",
-        "--no-show-interactive-dev-session",
+        "preview",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8080",
       ],
-      interpreter: "none",
       env: {
         NODE_ENV: "production",
       },
