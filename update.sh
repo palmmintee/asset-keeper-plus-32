@@ -11,6 +11,10 @@ git pull
 echo ">>> [2/4] bun install..."
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+if ! command -v bun >/dev/null 2>&1; then
+  echo "ไม่พบ bun ใน PATH — ให้รัน: source ~/.bashrc หรือ bash install.sh"
+  exit 1
+fi
 bun install
 
 echo ">>> [3/4] bun run build..."
@@ -21,8 +25,8 @@ if pm2 describe it-stock >/dev/null 2>&1; then
   pm2 restart it-stock --update-env
 else
   pm2 start ecosystem.config.cjs
-  pm2 save
 fi
+pm2 save
 
 echo ""
 echo ">>> อัปเดตเสร็จ! ดู log: pm2 logs it-stock"
