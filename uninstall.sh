@@ -1,17 +1,23 @@
 #!/usr/bin/env bash
-# ถอนการติดตั้งระบบ (มี option ลบข้อมูล)
+# ============================================================
+#  IT Stock - Uninstall (PM2)
+# ============================================================
 set -e
 
-read -p "⚠️  ลบ container ทั้งหมด? (y/N): " ans
-[[ "$ans" != "y" && "$ans" != "Y" ]] && exit 0
+echo ">>> หยุดและลบ process จาก PM2..."
+pm2 delete it-stock 2>/dev/null || true
+pm2 save --force
 
-read -p "⚠️  ลบข้อมูลฐานข้อมูลและไฟล์ใน Storage ด้วยหรือไม่? (พิมพ์ DELETE เพื่อยืนยัน): " confirm
-if [ "$confirm" = "DELETE" ]; then
-  echo ">>> หยุดและลบทุก container + volumes"
-  docker compose down -v
-else
-  echo ">>> หยุดและลบ container เท่านั้น (ข้อมูลใน volume ยังอยู่)"
-  docker compose down
+read -rp "ลบโฟลเดอร์ node_modules และ dist ด้วยหรือไม่? [y/N]: " ans
+if [[ "$ans" =~ ^[Yy]$ ]]; then
+  rm -rf node_modules dist .vite
+  echo "   ลบเรียบร้อย"
 fi
 
-echo ">>> เสร็จ"
+read -rp "ลบ PM2 ทั้งหมดออกจากระบบหรือไม่? (กระทบ app อื่นที่ใช้ PM2 ด้วย) [y/N]: " ans2
+if [[ "$ans2" =~ ^[Yy]$ ]]; then
+  sudo npm uninstall -g pm2
+  echo "   ลบ PM2 แล้ว"
+fi
+
+echo ">>> ถอนติดตั้งเสร็จสิ้น"
