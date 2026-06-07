@@ -3,7 +3,7 @@
 #  IT Stock - PM2 Installer for Ubuntu Server (IP 10.20.10.80)
 #  ใช้สำหรับติดตั้งและรันด้วย PM2 (ไม่ใช้ Docker)
 #
-#  Backend (PostgreSQL/Auth/Storage) ใช้ Supabase Cloud อยู่แล้ว
+#  Backend ใช้ Lovable Cloud อยู่แล้ว
 #  (ตามค่าใน .env: VITE_SUPABASE_URL)
 #
 #  Usage:  bash install.sh
@@ -40,7 +40,7 @@ fi
 
 if ! command -v pm2 >/dev/null 2>&1; then
   echo ">>> [4/5] ติดตั้ง PM2 (process manager)..."
-  sudo npm install -g pm2 wrangler
+  sudo npm install -g pm2
 else
   echo ">>> [4/5] PM2 มีอยู่แล้ว — ข้าม"
 fi
@@ -72,4 +72,5 @@ echo ""
 echo "   4) เข้าใช้งานที่: http://10.20.10.80:8080"
 echo ""
 echo " หรือใช้สคริปต์ build+start แบบรวบ:  bash update.sh"
+echo " ถ้ารันไม่ขึ้นให้ดู log:  pm2 logs it-stock --lines 200"
 echo "============================================================"
