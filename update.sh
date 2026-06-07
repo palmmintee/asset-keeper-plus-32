@@ -22,10 +22,9 @@ bun run build
 
 echo ">>> [4/4] Restart PM2..."
 if pm2 describe it-stock >/dev/null 2>&1; then
-  pm2 restart it-stock --update-env
-else
-  pm2 start ecosystem.config.cjs
+  pm2 delete it-stock
 fi
+pm2 start ecosystem.config.cjs
 pm2 save
 
 echo ""
